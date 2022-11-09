@@ -46,16 +46,66 @@ searchBtn.click(searchResults);
 //buttons
 submitScoreButton.on("click", createScoreCard);
 
+//weather Elements
+var todayTempEl = $("#todayTemp");
+var todatyWindEl = $("#todayWind");
+var todayHumidEl = $("#todayHumid");
+var todayIcon = $('#todayIcon');
+var futureTempEl = $('.futureTemp');
+var futureWindEl = $('.futureWind');
+var futureHumidEl = $('.futureHumid');
+var futureIconEl = $('.futureIcon')
+console.log(futureTempEl)
+var futureWeather = [];
+weatherapiKey = "ac96e744e22de6b8cf05d8399f7bfdf3"
 
-var weatherTracker = {
-    weatherapi: "ac96e744e22de6b8cf05d8399f7bfdf3",
-    zipcode: "",
-    fetchtracker: function () {
-        fetch("https://api.openweathermap.org/data/2.5/forecast?zip=" + zipcode + ",us&units=imerial&appid=" + weatherapi)
-            //city needs to be linked to the golf API
-            .then((response) => response.json())
-            .then((data) => this.forecastDisplay(data));
-    },
+function weatherTrackerToday() {
+
+    fetch("https://api.openweathermap.org/data/2.5/weather?zip=" + zipCode + "&appid=" + weatherapiKey + "&units=imperial")
+        //city needs to be linked to the golf API
+        .then((response) => response.json())
+        // .then((data) => this.forecastDisplay(data));
+        .then(function (data) {
+            // console.log(data);
+            iconURL = "http://openweathermap.org/img/wn/" + data.weather[0].icon + ".png";
+            todayTempEl.text(`Temp: ${data.main.temp} \u00B0F`);
+            todatyWindEl.text(`Wind: ${data.wind.speed} mph`);
+            todayHumidEl.text(`Humidity: ${data.main.humidity} %`)
+            todayIcon.attr("src", iconURL)
+        })
+    weatherContainer.show()
+}
+
+function weatherTrackerFuture() {
+    var futureURL =
+        "https://api.openweathermap.org/data/2.5/forecast?zip=" + zipCode + "&appid=" +
+        weatherapiKey +
+        "&units=imperial";
+    fetch(futureURL)
+        .then((response) => response.json())
+        .then(function (data) {
+            console.log(data)
+            console.log(data.list[4].dt_txt)
+            //lets grab the data
+            for (let i = 0; i < data.list.length; i++) {
+                if (data.list[i].dt_txt.includes('12:00:00')) {
+                    console.log("pushing data")
+                    futureWeather.push(data.list[i])
+                }
+            }
+            console.log(futureWeather)
+            //now we want to display the data
+            for (let i = 0; i < 2; i++) {
+                console.log(futureWeather[i].main.temp)
+                console.log(futureTempEl[i])
+                futureIconURL = "http://openweathermap.org/img/wn/" + (futureWeather[i].weather[0].icon) + ".png";
+                futureTempEl[i].textContent = (`Temp: ${futureWeather[i].main.temp} \u00B0F`)
+                futureWindEl[i].textContent = (`Wind: ${futureWeather[i].wind.speed} mph`)
+                futureHumidEl[i].textContent = (`Humidity: ${futureWeather[i].main.humidity} %`)
+                futureIconEl[i].setAttribute("src", futureIconURL)
+            }
+        })
+    weatherContainer.show()
 }
 
 const listOptions = {
@@ -77,7 +127,7 @@ function golfAPI(res) {
             courseResultsCount = '<br>' + coursesList.length + ' courses meet your search criteria<br>';
             $('#courses-bar').append('<h6>' + courseResultsCount + '</h6></br>');
             //iterates second fetch call for each course fetched by first results
-            for (var i = 0; i < coursesList.length; i++) {
+            for (let i = 0; i < coursesList.length; i++) {
                 var courseObj = { name: coursesList[i].name, distance: coursesList[i].distance, address: "", image: "", URL: "" }
                 var courseDistance = coursesList[i].distance;
                 var courseName = coursesList[i].name;
@@ -123,7 +173,7 @@ function golfAPI(res) {
 }
 
 async function geoAPI() {
-    console.log("geoAPI Running")
+    // console.log("geoAPI Running")
     let geo = fetch('https://api.geocod.io/v1.7/geocode?q=' + zipCode + '&api_key=' + api_key + '')
         .then(response => {
             // console.log('Response object looks like', response);
@@ -187,7 +237,7 @@ function renderScore() {
     scoreContainerEl.empty()
 
     // iterate through your saved score array
-    for (var i = 0; i < mySavedScore.length; i++) {
+    for (let i = 0; i < mySavedScore.length; i++) {
         var scoreText = ("Course: " + mySavedScore[i].course + ": Score: " + mySavedScore[i].score)
         var scoreList = $("<li></li>")
         scoreList.text(scoreText);
@@ -198,7 +248,7 @@ function renderScore() {
 
 function renderScore() {
     scoreContainerEl.empty()
-    for (var i = 0; i < mySavedScore.length; i++) {
+    for (let i = 0; i < mySavedScore.length; i++) {
         var scoreText = ("course: " + mySavedScore[i].course + ": Score: " + mySavedScore[i].score)
         var scoreList = $("<li></li>")
         scoreList.text(scoreText);
@@ -256,7 +306,7 @@ function storeCities() {
 
 function renderCities() {
     searchContainerEl.empty()
-    for (var i = 0; i < savedSearched.length; i++) {
+    for (let i = 0; i < savedSearched.length; i++) {
         //lets add the all of the previous cities as buttons
         var searchText = "Location: " + savedSearched[i].cityText + ' : ' + savedSearched[i].radiusText + " mile radius";
 
@@ -398,7 +448,10 @@ function searchResults(event) {
     geoAPI().then(function (res) {
         golfAPI(res);
     })
-    weatherContainer.show()
+    console.log(zipCode)
+    weatherTrackerToday()
+    weatherTrackerFuture()
+
 }
 
 function prevSearchResults(event) {
@@ -412,6 +465,8 @@ function prevSearchResults(event) {
         console.log(userLong)
         weatherContainer.show()
     })
+    weatherTrackerToday()
+    weatherTrackerFuture()
 }
 //display everything by calling the init 
 init()
